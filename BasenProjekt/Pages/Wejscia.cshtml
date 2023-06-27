@@ -1,0 +1,421 @@
+﻿@page
+@model Basen.Pages.WejsciaModel
+
+<h3>Wejścia</h3>
+
+<div>
+    <form asp-page-handler="Search" class="form-inline">
+        <div class="form-group">
+            <label for="searchTerm">Wyszukaj wejście:</label>
+            <input type="text" class="form-control" id="searchTerm" name="SearchTerm" placeholder="Wyszukaj...">
+        </div>
+        <button type="submit" class="btn btn-primary mt-4">Szukaj</button>
+    </form>
+    <form method="get" asp-page="/Wejscia" id="clearSearchForm">
+        <button type="submit" class="btn btn-secondary mt-2 mb-4" id="clearSearchBtn">Wyczyść</button>
+    </form>
+</div>
+
+
+@if (Model.Wejscia == null || Model.Wejscia.Count == 0)
+{
+    <p>Brak wejść.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Imię i nazwisko</th>
+                <th>Numer szafki</th>
+                <th>Czas rozpoczęcia</th>
+                <th>Czas zakończenia</th>
+                <th>Czas do wyjścia</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var wejscie in Model.Wejscia)
+            {
+                <tr>
+                    <td>@(wejscie.Klient != null ? (wejscie.Klient.Imie + " " + wejscie.Klient.Nazwisko) : "Brak danych o kliencie")</td>
+                    <td>@wejscie.NumerSzafki</td>
+                    <td>@wejscie.CzasRozpoczecia</td>
+                    <td>@wejscie.CzasZakonczenia</td>
+                    <td><span class="timer-color" id="timer"></span></td>
+                    <td class="btn-group">
+                        <button class="btn btn-primary editBtn" data-id="@wejscie.Id">Edytuj</button>
+                        <button class="btn btn-danger deleteBtn" data-id="@wejscie.Id">Usuń</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <div class="btn-group mt-2 mb-2">
+        <button id="show" type="button" class="btn btn-danger">Pokaż zakończone</button>
+        <button id="reset" type="button" class="btn btn-primary">Pokaż wszystkie</button>
+        <button id="addWejscieBtn" type="button" class="btn btn-success">Dodaj wejście</button>
+    </div>
+}
+
+
+
+<div id="addWejsciePopup" class="modal" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dodaj wejście</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Zamknij">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="addWejscieForm">
+                    <div class="form-group">
+                        <label for="addNumerSzafki">Numer szafki:</label>
+                        <input type="text" class="form-control" id="addNumerSzafki" name="NumerSzafki" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addKlient">Klient:</label>
+                        <select class="form-control" id="addKlient" name="Klient">
+                            @if (Model.Klienci != null)
+                            {
+                                foreach (var klient in Model.Klienci)
+                                {
+                                    <option value="@klient.Id">@klient.Imie @klient.Nazwisko</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="addCzasRozpoczecia">Czas rozpoczęcia:</label>
+                        <input type="datetime-local" class="form-control" id="addCzasRozpoczecia" name="CzasRozpoczecia" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addCzasZakonczenia">Czas zakończenia:</label>
+                        <input type="datetime-local" class="form-control" id="addCzasZakonczenia" name="CzasZakonczenia" required>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Dodaj</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="editWejsciePopup" class="modal" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edytuj wejście</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Zamknij">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="editWejscieForm">
+                    <input type="hidden" id="editWejscieId" name="Id" value="">
+                    <div class="form-group">
+                        <label for="editNumerSzafki">Numer szafki:</label>
+                        <input type="text" class="form-control" id="editNumerSzafki" name="NumerSzafki" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editKlient">Klient:</label>
+                        <select class="form-control" id="editKlient" name="Klient">
+
+                            @if (Model.Klienci != null)
+                            {
+                                foreach (var klient in Model.Klienci)
+                                {
+                                    <option value="@klient.Id">@klient.Imie @klient.Nazwisko</option>
+                                }
+                            }
+
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCzasRozpoczecia">Czas rozpoczęcia:</label>
+                        <input type="datetime-local" class="form-control" id="editCzasRozpoczecia" name="CzasRozpoczecia" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCzasZakonczenia">Czas zakończenia:</label>
+                        <input type="datetime-local" class="form-control" id="editCzasZakonczenia" name="CzasZakonczenia" required>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Dodaj</button>
+                    </div>
+                    
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        var id;
+        var klienci = @Json.Serialize(Model.Klienci);
+        document.getElementById("addWejscieBtn").addEventListener("click", function () {
+            document.getElementById("addWejsciePopup").style.display = "block";
+        });
+
+        document.querySelectorAll(".close").forEach(function (button) {
+            button.addEventListener("click", function () {
+                document.querySelectorAll(".modal").forEach(function (modal) {
+                    modal.style.display = "none";
+                });
+            });
+        });
+
+        setInterval(function () {
+            
+            
+            document.querySelectorAll(".timer-color").forEach(function (element) {
+                
+                var czasRozpoczeciaString = element.parentNode.previousElementSibling.previousElementSibling.textContent.trim();
+                var czasZakonczeniaString = element.parentNode.previousElementSibling.textContent.trim();
+
+                var podzieloneRozpoczecie = czasRozpoczeciaString.split(" ");
+                var dataPodzielonaRozpoczecie = podzieloneRozpoczecie[0].split(".");
+                var czasPodzielonyRozpoczecie = podzieloneRozpoczecie[1].split(":");
+                var czasRozpoczecia = new Date(Date.UTC(dataPodzielonaRozpoczecie[2], dataPodzielonaRozpoczecie[1] - 1, dataPodzielonaRozpoczecie[0], czasPodzielonyRozpoczecie[0]-2, czasPodzielonyRozpoczecie[1], czasPodzielonyRozpoczecie[2]));
+
+                var podzieloneZakonczenie = czasZakonczeniaString.split(" ");
+                var dataPodzielonaZakonczenie = podzieloneZakonczenie[0].split(".");
+                var czasPodzielonyZakonczenie = podzieloneZakonczenie[1].split(":");
+                var czasZakonczenia = new Date(Date.UTC(dataPodzielonaZakonczenie[2], dataPodzielonaZakonczenie[1] - 1, dataPodzielonaZakonczenie[0], czasPodzielonyZakonczenie[0]-2, czasPodzielonyZakonczenie[1], czasPodzielonyZakonczenie[2]));
+                
+                var teraz = new Date();
+                var roznica = czasZakonczenia - teraz;
+
+                if (roznica > 0) {
+                    var milisekundy = roznica % 1000;
+                    var sekundy = Math.floor((roznica / 1000) % 60);
+                    var minuty = Math.floor((roznica / (1000 * 60)) % 60);
+                    var godziny = Math.floor((roznica / (1000 * 60 * 60)) % 24);
+
+                    
+                    element.textContent = godziny + " godz., " + minuty + " min, " + sekundy + " sek";
+                    element.style.color = "black"; 
+                } else {
+                    roznica = -roznica; 
+                    var milisekundy = roznica % 1000;
+                    var sekundy = Math.floor((roznica / 1000) % 60);
+                    var minuty = Math.floor((roznica / (1000 * 60)) % 60);
+                    var godziny = Math.floor((roznica / (1000 * 60 * 60)) % 24);
+
+                    
+                    element.textContent = godziny + " godz., " + minuty + " min, " + sekundy + " sek";
+                    element.style.color = "red";
+                }
+            });
+        }, 1000);
+
+        document.getElementById("show").addEventListener("click", function () {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "Wejscia?handler=End", true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    var responseHtml = xhr.responseText;
+                    var tableFragment = document.createElement('div');
+                    tableFragment.innerHTML = responseHtml;
+                    var tableContent = tableFragment.querySelector('.table tbody');
+                    var tbody = document.querySelector('.table tbody');
+                    if (tbody) {
+                        tbody.innerHTML = tableContent.innerHTML;
+                    }
+                } else {
+                    alert("Wystąpił błąd podczas wyszukiwania wejść.");
+                }
+            };
+            xhr.send();
+
+        });
+
+        document.getElementById("reset").addEventListener("click", function () {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/Wejscia", true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    var parser = new DOMParser();
+                    var responseDoc = parser.parseFromString(xhr.responseText, "text/html");
+                    var newTbody = responseDoc.querySelector(".table tbody");
+                    document.querySelector(".table tbody").innerHTML = newTbody.innerHTML;
+                } else {
+                    console.error("Wystąpił błąd podczas wczytywania wejść.");
+                }
+            };
+            xhr.onerror = function () {
+                console.error("Nie udało się nawiązać połączenia.");
+            };
+            xhr.send();
+        });
+
+        document.querySelector(".addWejscieForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            var numerSzafki = document.getElementById("addNumerSzafki").value;
+            var czasRozpoczecia = document.getElementById("addCzasRozpoczecia").value;
+            var czasZakonczenia = document.getElementById("addCzasZakonczenia").value;
+            var klientId = document.getElementById("addKlient").value;
+
+            var wejscie = {
+                'NumerSzafki': numerSzafki,
+                'czasRozpoczecia': czasRozpoczecia,
+                'czasZakonczenia': czasZakonczenia,
+                'klientId': klientId
+            };
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/Wejscia?handler=Dodaj", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    document.getElementById("addWejsciePopup").style.display = "none";
+                    window.location.reload();
+                } else {
+                    alert("Wystąpił błąd podczas dodawania wejścia.");
+                }
+            };
+            
+            xhr.send(JSON.stringify(wejscie));
+        });
+
+        document.querySelectorAll(".editBtn").forEach(function (button) {
+            button.addEventListener("click", function () {
+                id = this.getAttribute("data-id");
+                document.getElementById("editWejsciePopup").style.display = "block";
+
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "/Wejscia?handler=Pobierz&id=" + id, true);
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        console.log(xhr.responseText);
+                        var wejscie = JSON.parse(xhr.responseText);
+
+                        var dater = new Date(wejscie.czasRozpoczecia);
+                        var yearr = dater.getFullYear();
+                        var monthr = ('0' + (dater.getMonth() + 1)).slice(-2);
+                        var dayr = ('0' + dater.getDate()).slice(-2);
+                        var hourr = ('0' + dater.getHours()).slice(-2);
+                        var minuter = ('0' + dater.getMinutes()).slice(-2);
+
+                        var formattedDater = yearr + '-' + monthr + '-' + dayr + 'T' + hourr + ':' + minuter;
+
+                        var datez = new Date(wejscie.czasZakonczenia);
+                        var yearz = datez.getFullYear();
+                        var monthz = ('0' + (datez.getMonth() + 1)).slice(-2);
+                        var dayz = ('0' + datez.getDate()).slice(-2);
+                        var hourz = ('0' + datez.getHours()).slice(-2);
+                        var minutez = ('0' + datez.getMinutes()).slice(-2);
+
+                        var formattedDatez = yearz + '-' + monthz + '-' + dayz + 'T' + hourz + ':' + minutez;
+
+                        document.getElementById("editNumerSzafki").value = wejscie.numerSzafki;
+                        document.getElementById("editCzasRozpoczecia").value = formattedDater;
+                        document.getElementById("editCzasZakonczenia").value = formattedDatez;
+                        document.getElementById("editKlient").value = wejscie.klientId;
+                    } else {
+                        alert("Wystąpił błąd podczas pobierania danych wejścia.");
+                    }
+                };
+                xhr.send();
+            });
+        });
+
+        document.querySelector(".editWejscieForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            var numerSzafki = document.getElementById("editNumerSzafki").value;
+            var czasRozpoczecia = document.getElementById("editCzasRozpoczecia").value;
+            var czasZakonczenia = document.getElementById("editCzasZakonczenia").value;
+            var klientId = document.getElementById("editKlient").value;
+
+            var wejscie = {
+                'Id': id,
+                'NumerSzafki': numerSzafki,
+                'czasRozpoczecia': czasRozpoczecia,
+                'czasZakonczenia': czasZakonczenia,
+                'klientId': klientId
+            };
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/Wejscia?handler=Edytuj", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    document.getElementById("editWejsciePopup").style.display = "none";
+                    window.location.reload();
+                } else {
+                    alert("Wystąpił błąd podczas edycji danych wejścia.");
+                }
+            };
+            xhr.send(JSON.stringify(wejscie));
+        });
+
+        document.querySelectorAll(".deleteBtn").forEach(function (button) {
+            button.addEventListener("click", function () {
+                id = this.getAttribute("data-id");
+
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/Wejscia?handler=Usun&id=" + id, true);
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        window.location.reload();
+                    } else {
+                        alert("Wystąpił błąd podczas usuwania wejścia.");
+                    }
+                };
+                xhr.send();
+            });
+        });
+
+        document.querySelector("form[asp-page-handler='Search']").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            var searchTerm = document.getElementById("searchTerm").value;
+            if (searchTerm == null) {
+                console.log("Podaj wartość");
+            } else {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/Wejscia/Search", true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        document.querySelector(".table tbody").innerHTML = xhr.responseText;
+                    } else {
+                        alert("Wystąpił błąd podczas wyszukiwania wejść.");
+                    }
+                };
+                xhr.send("SearchTerm=" + encodeURIComponent(searchTerm));
+            }
+
+        });
+
+        document.getElementById("clearSearchForm").addEventListener("click", function (event) {
+            event.preventDefault();
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/Wejscia", true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    var parser = new DOMParser();
+                    var responseDoc = parser.parseFromString(xhr.responseText, "text/html");
+                    var newTbody = responseDoc.querySelector(".table tbody");
+                    document.querySelector(".table tbody").innerHTML = newTbody.innerHTML;
+                } else {
+                    console.error("Wystąpił błąd podczas wczytywania wejść.");
+                }
+            };
+            xhr.onerror = function () {
+                console.error("Nie udało się nawiązać połączenia.");
+            };
+            xhr.send();
+        });
+
+        document.getElementById("addKlient").addEventListener("change", function () {
+            console.log("Wybrana wartość: " + this.value);
+        });
+
+    </script>
+}

@@ -1,0 +1,433 @@
+﻿@page
+@model Basen.Pages.KlienciModel
+
+<h3>Klienci</h3>
+
+<form method="post" asp-page-handler='Search'>
+    <div class="form-group">
+        <label for="searchTerm">Wyszukaj klienta:</label>
+        <input type="text" class="form-control" id="searchTerm" name="SearchTerm" placeholder="Wprowadź imię, nazwisko lub datę urodzenia" required>
+    </div>
+    <button type="submit" class="btn btn-primary mt-4">Szukaj</button>
+</form>
+<form method="get" asp-page="/Klienci" id="clearSearchForm">
+    <button type="submit" class="btn btn-secondary mt-2 mb-4" id="clearSearchBtn">Wyczyść</button>
+</form>
+
+@if (Model.Klienci == null || Model.Klienci.Count == 0)
+{
+        <p>Brak klientów.</p>
+}
+else
+{
+        <table class="table" >
+            <thead>
+                <tr>
+                    <th>Imię</th>
+                    <th>Nazwisko</th>
+                    <th>Data urodzenia</th>
+                    <th>Numer karnetu</th>
+                    <th>Operacje</th>
+                </tr>
+            </thead>
+        <tbody>
+                @foreach (var klient in Model.Klienci)
+                {
+                        <tr>
+                            <td>@klient.Imie</td>
+                            <td>@klient.Nazwisko</td>
+                            <td>@klient.DataUrodzenia.ToShortDateString()</td>
+                            <td>
+                                @if (klient.Karnet != null)
+                                {
+                                    <span>
+
+                                        @klient.Karnet.Numer
+                                   
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>Brak karnetu</span>
+                                }
+                            </td>
+                            <td class="btn-group">
+                                <button class="btn btn-primary editBtn" data-id="@klient.Id">Edytuj</button>
+                                <button class="btn btn-danger deleteBtn" data-id="@klient.Id">Usuń</button>
+                            </td>
+                        </tr>
+                }
+            </tbody>
+        </table>
+    
+}
+<div class="btn-group mb-4">
+    <button id="prevPageBtn" class="btn btn-secondary">Poprzednia</button>
+    <button id="nextPageBtn" class="btn btn-secondary">Następna</button>
+</div>
+<div>
+    <button id="addClientBtn" type="button" class="btn btn-primary">Dodaj klienta</button>
+</div>
+
+
+
+<div id="addClientPopup" class="modal" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dodaj klienta</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Zamknij">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="addClientForm">
+                    <div class="form-group">
+                        <label for="addImie">Imię:</label>
+                        <input type="text" class="form-control" id="addImie" name="Imie" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addNazwisko">Nazwisko:</label>
+                        <input type="text" class="form-control" id="addNazwisko" name="Nazwisko" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addDataUrodzenia">Data urodzenia:</label>
+                        <input type="date" class="form-control" id="addDataUrodzenia" name="DataUrodzenia" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addKarnet">Karnet:</label>
+                        <select class="form-control" id="addKarnet" name="Karnet">
+                            <option value="">Brak karnetu</option>
+                            @if (Model.Karnety != null)
+                            {
+                                @foreach (var karnet in Model.Karnety)
+                                {
+                                    <option value="@karnet.Id">@karnet.Numer</option>
+                                }
+                            }
+
+                        </select>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Dodaj</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="editClientPopup" class="modal" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edytuj klienta</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Zamknij">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="editClientForm">
+                    <div class="form-group">
+                        <label for="editImie">Imię:</label>
+                        <input type="text" class="form-control" id="editImie" name="Imie" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editNazwisko">Nazwisko:</label>
+                        <input type="text" class="form-control" id="editNazwisko" name="Nazwisko" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDataUrodzenia">Data urodzenia:</label>
+                        <input type="date" class="form-control" id="editDataUrodzenia" name="DataUrodzenia" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editKarnet">Karnet:</label>
+                        <select class="form-control" id="editKarnet" name="Karnet">
+                            <option value="">Brak karnetu</option>
+                            @if (Model.Karnety != null)
+                            {
+                                @foreach (var karnet in Model.Karnety)
+                                {
+                                    <option value="@karnet.Id">@karnet.Numer</option>
+                                }
+                            }
+                            
+                        </select>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Edytuj</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+        <script>
+            var id;
+            var aktualnastrona = 1;
+            var iloscnastronie = 5;
+            var karnety = @Json.Serialize(Model.Karnety);
+
+                document.getElementById("addClientBtn").addEventListener("click", function () {
+                document.getElementById("addClientPopup").style.display = "block";
+            });
+
+        document.getElementById("prevPageBtn").addEventListener("click", function () {
+            console.log("testprev");
+            if (aktualnastrona > 1) {
+                aktualnastrona--;
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", `/Klienci?handler=PobierzStrone&aktualnastrona=${aktualnastrona}&iloscstrona=${iloscnastronie}`, true);
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        var responseHtml = xhr.responseText;
+                        var tableFragment = document.createElement('div');
+                        tableFragment.innerHTML = responseHtml;
+                        var tableContent = tableFragment.querySelector('.table tbody');
+                        var tbody = document.querySelector('.table tbody');
+                        if (tbody) {
+                            tbody.innerHTML = tableContent.innerHTML;
+                            assignEventHandlers();
+                        }
+
+                    } else {
+                        alert("Wystąpił błąd podczas pobierania danych.");
+                    }
+                };
+                xhr.send();
+            }
+        });
+
+        document.getElementById("nextPageBtn").addEventListener("click", function () {
+
+            aktualnastrona++;
+            console.log(aktualnastrona);
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", `/Klienci?handler=PobierzStrone&aktualnastrona=${aktualnastrona}&iloscstrona=${iloscnastronie}`, true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    var responseHtml = xhr.responseText;
+                    var tableFragment = document.createElement('div');
+                    tableFragment.innerHTML = responseHtml;
+                    var tableContent = tableFragment.querySelector('.table tbody');
+                    var tbody = document.querySelector('.table tbody');
+                    if (tbody) {
+                        tbody.innerHTML = tableContent.innerHTML;
+                        assignEventHandlers();
+                    }
+
+                } else {
+                    alert("Wystąpił błąd podczas pobierania danych.");
+                }
+            };
+            xhr.send();
+        });
+
+        function fillEditForm() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", `/Klienci?handler=Pobierz&id=${id}`, true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    var klient = JSON.parse(xhr.responseText);
+                    var date = new Date(klient.dataUrodzenia);
+                    var year = date.getFullYear();
+                    var month = ('0' + (date.getMonth() + 1)).slice(-2);
+                    var day = ('0' + date.getDate()).slice(-2);
+
+                    var formattedDate = year + '-' + month + '-' + day;
+
+                    document.getElementById("editImie").value = klient.imie;
+                    document.getElementById("editNazwisko").value = klient.nazwisko;
+                    document.getElementById("editDataUrodzenia").value = formattedDate;
+
+                    var karnetSelect = document.getElementById("editKarnet");
+                    karnetSelect.value = klient.karnetId;
+                } else {
+                    alert("Wystąpił błąd podczas pobierania danych klienta.");
+                }
+            };
+            xhr.send();
+        }
+
+        function deleteClient() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/Klienci?handler=Usun&id=" + id, true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    window.location.reload();
+                } else {
+                    alert("Wystąpił błąd podczas usuwania klienta.");
+                }
+            };
+            xhr.send();
+        }
+
+        function assignEventHandlers() {
+            document.querySelectorAll(".close").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    document.querySelectorAll(".modal").forEach(function (modal) {
+                        modal.style.display = "none";
+                    });
+                });
+            });
+
+            var editBtns = document.querySelectorAll(".editBtn");
+            var deleteBtns = document.querySelectorAll(".deleteBtn");
+
+            for (var i = 0; i < editBtns.length; i++) {
+                editBtns[i].addEventListener("click", function () {
+                    id = this.getAttribute("data-id");
+                    document.getElementById("editClientPopup").style.display = "block";
+                    fillEditForm();
+                });
+            }
+
+            for (var j = 0; j < deleteBtns.length; j++) {
+                deleteBtns[j].addEventListener("click", function () {
+                    id = this.getAttribute("data-id");
+                    deleteClient();
+                });
+            }
+        }
+
+            document.querySelectorAll(".close").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    document.querySelectorAll(".modal").forEach(function (modal) {
+                        modal.style.display = "none";
+                    });
+                });
+            });
+
+            document.querySelector(".addClientForm").addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                var imie = document.getElementById("addImie").value;
+                var nazwisko = document.getElementById("addNazwisko").value;
+                var dataUrodzenia = document.getElementById("addDataUrodzenia").value;
+                var karnetId = document.getElementById("addKarnet").value;
+
+                var klient = {
+                    'imie': imie,
+                    'nazwisko': nazwisko,
+                    'dataUrodzenia': dataUrodzenia,
+                    'karnetId': karnetId
+                };
+
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/Klienci?handler=Dodaj", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        document.getElementById("addClientPopup").style.display = "none";
+                        window.location.reload();
+                    } else {
+                        alert("Wystąpił błąd podczas dodawania klienta.");
+                    }
+                };
+                xhr.send(JSON.stringify(klient));
+            });
+
+        document.querySelectorAll(".editBtn").forEach(function (button) {
+            button.addEventListener("click", function () {
+                id = this.getAttribute("data-id");
+                document.getElementById("editClientPopup").style.display = "block";
+
+                fillEditForm();
+            });
+        });
+
+        document.querySelector(".editClientForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            var imie = document.getElementById("editImie").value;
+            var nazwisko = document.getElementById("editNazwisko").value;
+            var dataUrodzenia = document.getElementById("editDataUrodzenia").value;
+            var karnetId = document.getElementById("editKarnet").value;
+
+            var klient = {
+                'id': id,
+                'imie': imie,
+                'nazwisko': nazwisko,
+                'dataUrodzenia': dataUrodzenia,
+                'karnetId': karnetId
+            };
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/Klienci?handler=Edytuj", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    document.getElementById("editClientPopup").style.display = "none";
+                    window.location.reload();
+                } else {
+                    alert("Wystąpił błąd podczas edycji danych klienta.");
+                }
+            };
+            xhr.send(JSON.stringify(klient));
+        });
+
+
+    document.querySelectorAll(".deleteBtn").forEach(function (button) {
+        button.addEventListener("click", function () {
+            id = this.getAttribute("data-id");
+            deleteClient();
+        });
+    });
+
+        document.querySelector("form[asp-page-handler='Search']").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            var searchTerm = document.getElementById("searchTerm").value;
+            if( searchTerm == null){
+                console.log("Podaj wartość");
+            }
+            else{
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/Klienci/Search", true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        document.querySelector(".table tbody").innerHTML = xhr.responseText;
+                    } else {
+                        alert("Wystąpił błąd podczas wyszukiwania klientów.");
+                    }
+                };
+                xhr.send("SearchTerm=" + encodeURIComponent(searchTerm));
+            }
+            
+        });
+
+        document.getElementById("clearSearchForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/Klienci", true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    var parser = new DOMParser();
+                    var responseDoc = parser.parseFromString(xhr.responseText, "text/html");
+                    var newTbody = responseDoc.querySelector(".table tbody");
+                    document.querySelector(".table tbody").innerHTML = newTbody.innerHTML;
+
+                } else {
+                    console.error("Wystąpił błąd podczas wczytywania klientów.");
+                }
+            };
+            xhr.onerror = function () {
+                console.error("Nie udało się nawiązać połączenia.");
+            };
+            xhr.send();
+        });
+
+
+        document.getElementById("addKarnet").addEventListener("change", function () {
+            console.log("Wybrana wartość: " + this.value);
+        });
+
+
+        
+
+        
+        </script>
+}

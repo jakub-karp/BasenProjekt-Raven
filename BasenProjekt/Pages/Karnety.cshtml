@@ -1,0 +1,338 @@
+﻿@page
+@model Basen.Pages.KarnetyModel
+
+<h3>Karnety</h3>
+
+<form method="post" asp-page-handler='Search'>
+    <div class="form-group">
+        <label for="searchTerm">Wyszukaj karnet:</label>
+        <input type="text" class="form-control" id="searchTerm" name="SearchTerm" placeholder="Wprowadź nazwę" required>
+    </div>
+    <button type="submit" class="btn btn-primary mt-4">Szukaj</button>
+</form>
+<form method="get" asp-page="/Karnety" id="clearSearchForm">
+    <button type="submit" class="btn btn-secondary mt-2 mb-4" id="clearSearchBtn">Wyczyść</button>
+</form>
+
+@if (Model.Karnety == null || Model.Karnety.Count == 0)
+{
+        <p>Brak karnetów.</p>
+}
+else
+{
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Numer karnetu</th>
+                    <th>Data rozpoczęcia</th>
+                    <th>Data zakończenia</th>
+                    <th>Operacje</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var karnet in Model.Karnety)
+            {
+                    <tr>
+                        <td>@karnet.Numer</td>
+                        <td>@karnet.DataRozpoczecia.ToShortDateString()</td>
+                        <td>
+                            @if (karnet.DataZakonczenia < DateTime.Now)
+                            {
+                                <span style="color: red;">@karnet.DataZakonczenia.ToShortDateString()</span>
+                            }
+                            else
+                            {
+                                @karnet.DataZakonczenia.ToShortDateString()
+                            }
+                        </td>
+                        <td class="btn-group">
+                            <button class="btn btn-primary editBtn" data-id="@karnet.Id">Edytuj</button>
+                            <button class="btn btn-danger deleteBtn" data-id="@karnet.Id">Usuń</button>
+                        </td>
+                    </tr>
+            }
+            </tbody>
+            
+        </table>
+    <div class="btn-group mt-2 mb-2">
+        <button id="show" type="button" class="btn btn-danger">Pokaż zakończone</button>
+        <button id="reset" type="button" class="btn btn-primary">Pokaż wszystkie</button>
+        <button id="addKarnetBtn" type="button" class="btn btn-primary">Dodaj karnet</button>
+    </div>
+}
+
+
+
+<div id="addKarnetPopup" class="modal" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dodaj karnet</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Zamknij">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="addKarnetForm">
+                    <div class="form-group">
+                        <label for="addNumer">Numer:</label>
+                        <input type="text" class="form-control" id="addNumer" name="karnet.Numer" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addDataRozpoczecia">Data rozpoczęcia:</label>
+                        <input type="date" class="form-control" id="addDataRozpoczecia" name="karnet.DataRozpoczecia" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addDataZakonczenia">Data zakończenia:</label>
+                        <input type="date" class="form-control" id="addDataZakonczenia" name="karnet.DataZakonczenia" required>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Dodaj</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="editKarnetPopup" class="modal" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edytuj karnet</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Zamknij">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="editKarnetForm">
+                    <div class="form-group">
+                        <label for="editNumer">Numer:</label>
+                        <input type="text" class="form-control" id="editNumer" name="numer" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDataRozpoczecia">Data rozpoczęcia:</label>
+                        <input type="date" class="form-control" id="editDataRozpoczecia" name="DataRozpoczecia" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDataZakonczenia">Data zakończenia:</label>
+                        <input type="date" class="form-control" id="editDataZakonczenia" name="DataZakonczenia" required>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Edytuj</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+        <script>
+                var id;
+            document.getElementById("addKarnetBtn").addEventListener("click", function () {
+                document.getElementById("addKarnetPopup").style.display = "block";
+            });
+
+            document.querySelectorAll(".close").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    document.querySelectorAll(".modal").forEach(function (modal) {
+                        modal.style.display = "none";
+                    });
+                });
+            });
+
+        document.querySelector(".addKarnetForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            var numer = document.getElementById("addNumer").value;
+            var dataRozpoczecia = document.getElementById("addDataRozpoczecia").value;
+            var dataZakonczenia = document.getElementById("addDataZakonczenia").value;
+
+            var karnet = {
+                'Numer': numer,
+                'DataRozpoczecia': dataRozpoczecia,
+                'DataZakonczenia': dataZakonczenia
+            };
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/Karnety?handler=Dodaj", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    document.getElementById("addKarnetPopup").style.display = "none";
+                    window.location.reload();
+                } else {
+                    alert("Wystąpił błąd podczas dodawania karnetu.");
+                }
+            };
+            xhr.send(JSON.stringify(karnet));
+            console.log('formularz wysyłany');
+        });
+
+        document.querySelectorAll(".editBtn").forEach(function (button) {
+            button.addEventListener("click", function () {
+                id = this.getAttribute("data-id");
+                document.getElementById("editKarnetPopup").style.display = "block";
+
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "/Karnety?handler=Pobierz&id=" + id, true);
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        var karnet = JSON.parse(xhr.responseText);
+                        var dater = new Date(karnet.dataRozpoczecia);
+                        var datez = new Date(karnet.dataZakonczenia);
+                        var yearr = dater.getFullYear();
+                        var monthr = ('0' + (dater.getMonth() + 1)).slice(-2);
+                        var dayr = ('0' + dater.getDate()).slice(-2);
+                        var yearz = datez.getFullYear();
+                        var monthz = ('0' + (datez.getMonth() + 1)).slice(-2);
+                        var dayz = ('0' + datez.getDate()).slice(-2);
+
+                        var formattedDater = yearr + '-' + monthr + '-' + dayr;
+                        var formattedDatez = yearz + '-' + monthz + '-' + dayz;
+                        document.getElementById("editNumer").value = karnet.numer;
+                        document.getElementById("editDataRozpoczecia").value = formattedDater;
+                        document.getElementById("editDataZakonczenia").value = formattedDatez;
+                    } else {
+                        alert("Wystąpił błąd podczas pobierania danych karnetu.");
+                    }
+                };
+                xhr.send();
+            });
+        });
+
+        document.querySelector(".editKarnetForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            var numer = document.getElementById("editNumer").value;
+            var datarozpoczecia = document.getElementById("editDataRozpoczecia").value;
+            var datazakonczenia = document.getElementById("editDataZakonczenia").value;
+
+            var karnet = {
+                'Id': id,
+                'Numer': numer,
+                'DataRozpoczecia': datarozpoczecia,
+                'DataZakonczenia': datazakonczenia
+            };
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/Karnety?handler=Edytuj", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    document.getElementById("editKarnetPopup").style.display = "none";
+                    window.location.reload();
+                } else {
+                    alert("Wystąpił błąd podczas edycji danych karnetu.");
+                }
+            };
+            xhr.send(JSON.stringify(karnet));
+        });
+
+            document.querySelectorAll(".deleteBtn").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    id = this.getAttribute("data-id");
+                    console.log(id);
+
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("POST", "/Karnety?handler=Usun&id=" + id, true);
+                    xhr.onload = function () {
+                        if (xhr.status === 200) {
+                            window.location.reload();
+                        } else {
+                            alert("Wystąpił błąd podczas usuwania klienta.");
+                        }
+                    };
+                    xhr.send();
+                });
+            });
+
+        document.getElementById("show").addEventListener("click", function () {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "Karnety?handler=End", true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    var responseHtml = xhr.responseText;
+                    var tableFragment = document.createElement('div');
+                    tableFragment.innerHTML = responseHtml;
+                    var tableContent = tableFragment.querySelector('.table tbody');
+                    var tbody = document.querySelector('.table tbody'); 
+                    if (tbody) {
+                        tbody.innerHTML = tableContent.innerHTML;
+                    }
+                } else {
+                    alert("Wystąpił błąd podczas wyszukiwania karnetów.");
+                }
+            };
+            xhr.send();
+
+        });
+
+        document.getElementById("reset").addEventListener("click", function () {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/Karnety", true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    var parser = new DOMParser();
+                    var responseDoc = parser.parseFromString(xhr.responseText, "text/html");
+                    var newTbody = responseDoc.querySelector(".table tbody");
+                    document.querySelector(".table tbody").innerHTML = newTbody.innerHTML;
+                } else {
+                    console.error("Wystąpił błąd podczas wczytywania karnetów.");
+                }
+            };
+            xhr.onerror = function () {
+                console.error("Nie udało się nawiązać połączenia.");
+            };
+            xhr.send();
+        });
+
+        document.querySelector("form[asp-page-handler='Search']").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            var searchTerm = document.getElementById("searchTerm").value;
+            if( searchTerm == null){
+                console.log("Podaj wartość");
+            }
+            else{
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/Karnety/Search", true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        document.querySelector(".table tbody").innerHTML = xhr.responseText;
+                    } else {
+                        alert("Wystąpił błąd podczas wyszukiwania karnetów.");
+                    }
+                };
+                xhr.send("SearchTerm=" + encodeURIComponent(searchTerm));
+            }
+            
+        });
+
+        
+
+        document.getElementById("clearSearchForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/Karnety", true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    var parser = new DOMParser();
+                    var responseDoc = parser.parseFromString(xhr.responseText, "text/html");
+                    var newTbody = responseDoc.querySelector(".table tbody");
+                    document.querySelector(".table tbody").innerHTML = newTbody.innerHTML;
+                } else {
+                    console.error("Wystąpił błąd podczas wczytywania karnetów.");
+                }
+            };
+            xhr.onerror = function () {
+                console.error("Nie udało się nawiązać połączenia.");
+            };
+            xhr.send();
+        });
+        </script>
+}
